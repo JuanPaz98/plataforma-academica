@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simulador de Resistencia Eléctrica</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;500;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --navy: #0A1628;
+      --navy2: #0D2248;
+      --blue: #1565C0;
+      --blue2: #1E88E5;
+      --orange: #FF6D00;
+      --orange2: #FF9100;
+      --green: #00897B;
+      --white: #F5F7FA;
+      --gray: #8B9BAE;
+      --light: #C9D6E8;
+      --card: #111E35;
+      --card2: #162040;
+      --border: rgba(255, 255, 255, 0.08);
+      --mono: 'JetBrains Mono', monospace;
+      --display: 'Syne', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--navy);
+      color: var(--white);
+      font-family: var(--display);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── Background grid pattern ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(21, 101, 192, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21, 101, 192, 0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    /* ── Header ── */
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    .header-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .omega-badge {
+      width: 64px;
+      height: 64px;
+      border-radius: 12px;
+      background: var(--orange);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--navy);
+      flex-shrink: 0;
+      font-family: var(--mono);
+      box-shadow: 0 0 30px rgba(255, 109, 0, 0.35);
+    }
+
+    .header-text h1 {
+      font-size: 28px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+
+    .header-text h1 span {
+      color: var(--orange);
+    }
+
+    .header-text p {
+      font-size: 13px;
+      color: var(--gray);
+      margin-top: 6px;
+      font-family: var(--mono);
+    }
+
+    .header-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .chip {
+      font-size: 11px;
+      font-family: var(--mono);
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      color: var(--gray);
+      background: var(--card);
+    }
+
+    .chip.active {
+      border-color: var(--orange);
+      color: var(--orange);
+      background: rgba(255, 109, 0, 0.1);
+    }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 1.5rem;
+      background: var(--card);
+      padding: 5px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .tab {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--display);
+      border: none;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.3px;
+    }
+
+    .tab:hover {
+      color: var(--white);
+    }
+
+    .tab.active {
+      background: var(--orange);
+      color: var(--navy);
+    }
+
+    .panel {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(6px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.5rem;
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--gray);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .grid3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    /* ── Metric cards ── */
+    .metric {
+      background: var(--card2);
+      border-radius: 10px;
+      padding: 1rem;
+      text-align: center;
+      border: 1px solid var(--border);
+      transition: border-color 0.3s;
+    }
+
+    .metric.hi {
+      border-color: var(--orange);
+    }
+
+    .metric .m-label {
+      font-size: 10px;
+      font-family: var(--mono);
+      color: var(--gray);
+      margin-bottom: 4px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .metric .m-val {
+      font-size: 26px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--white);
+      transition: color 0.3s;
+    }
+
+    .metric.hi .m-val {
+      color: var(--orange);
+    }
+
+    .metric .m-unit {
+      font-size: 11px;
+      color: var(--gray);
+      font-family: var(--mono);
+      margin-top: 2px;
+    }
+
+    /* ── Sliders ── */
+    .slider-group {
+      margin-bottom: 1.1rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 6px;
+    }
+
+    .slider-label {
+      font-size: 12px;
+      font-family: var(--mono);
+      color: var(--light);
+    }
+
+    .slider-val {
+      font-size: 16px;
+      font-weight: 700;
+      font-family: var(--mono);
+    }
+
+    .sv-v {
+      color: var(--blue2);
+    }
+
+    .sv-r {
+      color: var(--orange);
+    }
+
+    .sv-g {
+      color: var(--green);
+    }
+
+    .sv-w {
+      color: var(--white);
+    }
+
+    input[type=range] {
+      width: 100%;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--white);
+      border: 3px solid var(--orange);
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(255, 109, 0, 0.5);
+    }
+
+    input[type=range].blue-thumb::-webkit-slider-thumb {
+      border-color: var(--blue2);
+      box-shadow: 0 0 8px rgba(30, 136, 229, 0.5);
+    }
+
+    input[type=range].green-thumb::-webkit-slider-thumb {
+      border-color: var(--green);
+      box-shadow: 0 0 8px rgba(0, 137, 123, 0.4);
+    }
+
+    /* ── Bar visualization ── */
+    .bar-row {
+      margin-bottom: 10px;
+    }
+
+    .bar-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--gray);
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .bf-v {
+      background: var(--blue2);
+    }
+
+    .bf-i {
+      background: var(--orange);
+    }
+
+    .bf-p {
+      background: var(--green);
+    }
+
+    /* ── Formula box ── */
+    .formula-display {
+      background: var(--navy2);
+      border: 1px solid rgba(255, 109, 0, 0.3);
+      border-radius: 12px;
+      padding: 1.25rem;
+      text-align: center;
+      margin-bottom: 1.25rem;
+    }
+
+    .formula-big {
+      font-size: 36px;
+      font-weight: 700;
+      font-family: var(--mono);
+      letter-spacing: 3px;
+    }
+
+    .fv {
+      color: var(--blue2);
+    }
+
+    .fi {
+      color: var(--orange);
+    }
+
+    .fr {
+      color: var(--green);
+    }
+
+    .formula-sub {
+      font-size: 11px;
+      color: var(--gray);
+      font-family: var(--mono);
+      margin-top: 6px;
+    }
+
+    /* ── Interpretation box ── */
+    .interp-box {
+      background: var(--card2);
+      border-left: 3px solid var(--orange);
+      border-radius: 0 8px 8px 0;
+      padding: 0.75rem 1rem;
+      font-size: 13px;
+      color: var(--light);
+      line-height: 1.6;
+      margin-top: 1rem;
+      font-family: var(--mono);
+    }
+
+    /* ── SVG circuit ── */
+    .circuit-wrap {
+      background: var(--card2);
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ── Color bands ── */
+    .resistor-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      margin: 1.25rem 0;
+    }
+
+    .res-wire {
+      width: 40px;
+      height: 3px;
+      background: var(--light);
+    }
+
+    .res-body {
+      display: flex;
+      align-items: center;
+      height: 54px;
+      background: #C4874A;
+      border-radius: 8px;
+      padding: 0 6px;
+      gap: 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .res-band {
+      width: 20px;
+      height: 54px;
+      transition: background 0.3s;
+    }
+
+    .res-band:first-child {
+      border-radius: 4px 0 0 4px;
+    }
+
+    .res-band:last-child {
+      border-radius: 0 4px 4px 0;
+    }
+
+    .res-spacer {
+      width: 12px;
+    }
+
+    .band-label-row {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+
+    .band-chip {
+      font-size: 10px;
+      font-family: var(--mono);
+      padding: 3px 10px;
+      border-radius: 20px;
+      color: var(--navy);
+      font-weight: 700;
+    }
+
+    .color-result {
+      text-align: center;
+      padding: 1rem;
+      background: var(--card2);
+      border-radius: 10px;
+      margin-top: 0.75rem;
+    }
+
+    .color-result .cr-val {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--orange);
+    }
+
+    .color-result .cr-tol {
+      font-size: 11px;
+      color: var(--gray);
+      font-family: var(--mono);
+      margin-top: 4px;
+    }
+
+    .color-table {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      margin-top: 1rem;
+    }
+
+    .ct-cell {
+      text-align: center;
+    }
+
+    .ct-swatch {
+      width: 100%;
+      height: 22px;
+      border-radius: 4px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .ct-name {
+      font-size: 9px;
+      font-family: var(--mono);
+      color: var(--gray);
+      margin-top: 3px;
+    }
+
+    .ct-num {
+      font-size: 10px;
+      font-family: var(--mono);
+      font-weight: 700;
+      color: var(--light);
+    }
+
+    /* ── Mode toggle ── */
+    .mode-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--card2);
+      padding: 4px;
+      border-radius: 10px;
+      margin-bottom: 1.25rem;
+      border: 1px solid var(--border);
+    }
+
+    .mode-btn {
+      flex: 1;
+      padding: 9px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--display);
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--gray);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .mode-btn.active {
+      background: var(--blue);
+      color: var(--white);
+    }
+
+    /* ── Info bar at bottom ── */
+    .info-bar {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1rem 1.25rem;
+      margin-top: 1rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .info-col-title {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--orange);
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .info-col-text {
+      font-size: 12px;
+      color: var(--light);
+      line-height: 1.7;
+      font-family: var(--mono);
+    }
+
+    /* ── Voltage breakdown ── */
+    .vbd-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 7px;
+    }
+
+    .vbd-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .vbd-label {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--gray);
+      flex: 1;
+    }
+
+    .vbd-val {
+      font-size: 13px;
+      font-family: var(--mono);
+      font-weight: 700;
+    }
+
+    .divider {
+      height: 1px;
+      background: var(--border);
+      margin: 1.25rem 0;
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 3rem;
+      text-align: center;
+    }
+
+    .footer-text {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--gray);
+    }
+
+    .footer-text span {
+      color: var(--orange);
+    }
+
+    @media (max-width: 650px) {
+      .grid2 {
+        grid-template-columns: 1fr;
+      }
+
+      .grid3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .header-text h1 {
+        font-size: 22px;
+      }
+
+      .formula-big {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- HEADER -->
+    <header>
+      <div class="header-top">
+        <div class="omega-badge">Ω</div>
+        <div class="header-text">
+          <h1>Simulador de <span>Resistencia</span> Eléctrica</h1>
+          <p>// Circuitos Eléctricos · Electrónica Digital · 2026</p>
+        </div>
+      </div>
+    </header>
+
+    <!-- TABS -->
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('ohm')">⚡ Ley de Ohm</button>
+      <button class="tab" onclick="switchTab('colores')">🎨 Código de colores</button>
+      <button class="tab" onclick="switchTab('circuito')">🔗 Serie y Paralelo</button>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- PANEL 1 — LEY DE OHM                   -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="panel active" id="panel-ohm">
+      <div class="formula-display">
+        <div class="formula-big">
+          <span class="fv">V</span>
+          <span style="color:#4A5568"> = </span>
+          <span class="fi">I</span>
+          <span style="color:#4A5568"> × </span>
+          <span class="fr">R</span>
+        </div>
+        <div class="formula-sub">Voltaje (V) = Corriente (A) × Resistencia (Ω)</div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">// Controles</div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Voltaje (V)</span>
+              <span class="slider-val sv-v" id="rd-v">12 V</span>
+            </div>
+            <input type="range" id="sl-v" min="1" max="24" step="1" value="12" class="blue-thumb" oninput="updateOhm()">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Resistencia (Ω)</span>
+              <span class="slider-val sv-r" id="rd-r">40 Ω</span>
+            </div>
+            <input type="range" id="sl-r" min="1" max="100" step="1" value="40" oninput="updateOhm()">
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title">// Resultados</div>
+
+          <div class="grid3" style="margin-bottom:1rem">
+            <div class="metric">
+              <div class="m-label">Voltaje</div>
+              <div class="m-val fv" id="res-v">12</div>
+              <div class="m-unit">V</div>
+            </div>
+            <div class="metric hi">
+              <div class="m-label">Corriente</div>
+              <div class="m-val" id="res-i">0.30</div>
+              <div class="m-unit">A</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">Potencia</div>
+              <div class="m-val fr" id="res-p">3.60</div>
+              <div class="m-unit">W</div>
+            </div>
+          </div>
+
+          <div class="bar-row">
+            <div class="bar-info"><span>Voltaje</span><span id="bv-txt">12 V</span></div>
+            <div class="bar-track">
+              <div class="bar-fill bf-v" id="bar-v" style="width:50%"></div>
+            </div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-info"><span>Corriente</span><span id="bi-txt">0.30 A</span></div>
+            <div class="bar-track">
+              <div class="bar-fill bf-i" id="bar-i" style="width:30%"></div>
+            </div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-info"><span>Potencia</span><span id="bp-txt">3.60 W</span></div>
+            <div class="bar-track">
+              <div class="bar-fill bf-p" id="bar-p" style="width:15%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">// Circuito animado</div>
+          <div class="circuit-wrap">
+            <svg id="circuit-svg" viewBox="0 0 300 175" style="width:100%;height:175px">
+              <!-- Battery -->
+              <rect x="12" y="72" width="14" height="36" rx="2" fill="#1A2F50" stroke="#1E88E5" stroke-width="1.5" />
+              <line x1="19" y1="65" x2="19" y2="72" stroke="#1E88E5" stroke-width="2" />
+              <line x1="19" y1="108" x2="19" y2="115" stroke="#1E88E5" stroke-width="2" />
+              <text x="10" y="62" fill="#1E88E5" font-size="12" font-family="'JetBrains Mono',monospace">+</text>
+              <text x="10" y="128" fill="#1E88E5" font-size="12" font-family="'JetBrains Mono',monospace">−</text>
+              <text id="lbl-bat" x="5" y="148" fill="#8B9BAE" font-size="10"
+                font-family="'JetBrains Mono',monospace">12V</text>
+              <!-- Wires top/bottom -->
+              <line x1="26" y1="78" x2="26" y2="35" stroke="#3A4E6A" stroke-width="2" />
+              <line x1="26" y1="102" x2="26" y2="142" stroke="#3A4E6A" stroke-width="2" />
+              <line x1="26" y1="35" x2="275" y2="35" stroke="#3A4E6A" stroke-width="2" />
+              <line x1="26" y1="142" x2="275" y2="142" stroke="#3A4E6A" stroke-width="2" />
+              <line x1="275" y1="35" x2="275" y2="68" stroke="#3A4E6A" stroke-width="2" />
+              <line x1="275" y1="112" x2="275" y2="142" stroke="#3A4E6A" stroke-width="2" />
+              <!-- Resistor -->
+              <rect id="res-rect" x="247" y="68" width="56" height="44" rx="5" fill="#FF6D00" opacity="0.15"
+                stroke="#FF6D00" stroke-width="1.5" />
+              <text x="275" y="95" text-anchor="middle" fill="#FF6D00" font-size="20"
+                font-family="'JetBrains Mono',monospace" font-weight="700">Ω</text>
+              <text id="lbl-res" x="275" y="125" text-anchor="middle" fill="#8B9BAE" font-size="10"
+                font-family="'JetBrains Mono',monospace">40Ω</text>
+              <!-- Ammeter -->
+              <circle cx="150" cy="142" r="13" fill="#111E35" stroke="#00897B" stroke-width="1.5" />
+              <text x="150" y="146" text-anchor="middle" fill="#00897B" font-size="9"
+                font-family="'JetBrains Mono',monospace" font-weight="700">A</text>
+              <text id="lbl-amp" x="150" y="163" text-anchor="middle" fill="#FF6D00" font-size="10"
+                font-family="'JetBrains Mono',monospace">0.30A</text>
+              <!-- Animated electrons -->
+              <circle id="e1" r="5" fill="#00897B" opacity="0.9" />
+              <circle id="e2" r="5" fill="#1E88E5" opacity="0.9" />
+              <circle id="e3" r="5" fill="#00897B" opacity="0.9" />
+            </svg>
+          </div>
+
+          <div class="interp-box" id="interp">
+            Con 12V y 40Ω, fluyen 0.30 amperios. Resistencia moderada — corriente controlada.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- PANEL 2 — CÓDIGO DE COLORES            -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="panel" id="panel-colores">
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">// Ajustar bandas</div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Banda 1 — decenas</span>
+              <span class="slider-val sv-v" id="rd-b1">4</span>
+            </div>
+            <input type="range" id="b1" min="0" max="9" step="1" value="4" class="blue-thumb" oninput="updateColor()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Banda 2 — unidades</span>
+              <span class="slider-val sv-r" id="rd-b2">7</span>
+            </div>
+            <input type="range" id="b2" min="0" max="9" step="1" value="7" oninput="updateColor()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Multiplicador</span>
+              <span class="slider-val sv-g" id="rd-b3">×10</span>
+            </div>
+            <input type="range" id="b3" min="0" max="6" step="1" value="1" class="green-thumb" oninput="updateColor()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Tolerancia</span>
+              <span class="slider-val sv-w" id="rd-b4">±5%</span>
+            </div>
+            <input type="range" id="b4" min="0" max="2" step="1" value="1" oninput="updateColor()">
+          </div>
+
+          <div class="color-result">
+            <div class="cr-val" id="color-val">470 Ω</div>
+            <div class="cr-tol" id="color-tol">Tolerancia ±5% → 446.5 Ω a 493.5 Ω</div>
+          </div>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column">
+          <div class="card-title">// Resistor visual</div>
+
+          <div class="resistor-visual">
+            <div class="res-wire"></div>
+            <div class="res-body">
+              <div class="res-band" id="band1" style="background:#FFD700"></div>
+              <div class="res-spacer"></div>
+              <div class="res-band" id="band2" style="background:#8B4513"></div>
+              <div class="res-spacer"></div>
+              <div class="res-band" id="band3" style="background:#8B4513"></div>
+              <div class="res-spacer" style="width:28px"></div>
+              <div class="res-band" id="band4" style="background:#C0C0C0"></div>
+            </div>
+            <div class="res-wire"></div>
+          </div>
+
+          <div class="band-label-row" id="band-labels"></div>
+
+          <div class="divider"></div>
+          <div class="card-title">// Tabla de colores</div>
+          <div class="color-table" id="color-table"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════ -->
+    <!-- PANEL 3 — SERIE Y PARALELO             -->
+    <!-- ═══════════════════════════════════════ -->
+    <div class="panel" id="panel-circuito">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="btn-serie" onclick="setMode('serie')">⟶ Circuito en Serie</button>
+        <button class="mode-btn" id="btn-paralelo" onclick="setMode('paralelo')">⇉ Circuito en Paralelo</button>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <div class="card-title">// Resistencias</div>
+
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label" style="color:#1E88E5">R1 (Ω)</span>
+              <span class="slider-val sv-v" id="rd-r1">100 Ω</span>
+            </div>
+            <input type="range" id="sr1" min="10" max="200" step="10" value="100" class="blue-thumb"
+              oninput="updateCircuit()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label" style="color:#FF6D00">R2 (Ω)</span>
+              <span class="slider-val sv-r" id="rd-r2">150 Ω</span>
+            </div>
+            <input type="range" id="sr2" min="10" max="200" step="10" value="150" oninput="updateCircuit()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label" style="color:#00897B">R3 (Ω)</span>
+              <span class="slider-val sv-g" id="rd-r3">50 Ω</span>
+            </div>
+            <input type="range" id="sr3" min="10" max="200" step="10" value="50" class="green-thumb"
+              oninput="updateCircuit()">
+          </div>
+          <div class="slider-group">
+            <div class="slider-header">
+              <span class="slider-label">Voltaje fuente (V)</span>
+              <span class="slider-val sv-w" id="rd-vsrc">12 V</span>
+            </div>
+            <input type="range" id="sv-src" min="1" max="24" step="1" value="12" oninput="updateCircuit()">
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title">// Totales</div>
+          <div class="grid3">
+            <div class="metric">
+              <div class="m-label">R total</div>
+              <div class="m-val fr" id="s-rt">300</div>
+              <div class="m-unit">Ω</div>
+            </div>
+            <div class="metric hi">
+              <div class="m-label">I total</div>
+              <div class="m-val" id="s-it">0.040</div>
+              <div class="m-unit">A</div>
+            </div>
+            <div class="metric">
+              <div class="m-label">P total</div>
+              <div class="m-val sv-g" id="s-pt">0.48</div>
+              <div class="m-unit">W</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+          <div class="card-title" id="vbd-title">// Voltaje en cada R</div>
+          <div id="voltage-breakdown"></div>
+        </div>
+
+        <div class="card">
+          <div class="card-title">// Diagrama del circuito</div>
+          <svg id="circuit-panel" viewBox="0 0 300 165" style="width:100%;height:165px;margin-bottom:0.75rem"></svg>
+
+          <div class="info-bar">
+            <div>
+              <div class="info-col-title">En Serie</div>
+              <div class="info-col-text">La corriente es igual en todas. El voltaje se divide. R_t = R1 + R2 + R3. Si
+                una falla, el circuito se abre.</div>
+            </div>
+            <div>
+              <div class="info-col-title">En Paralelo</div>
+              <div class="info-col-text">El voltaje es igual en todas. La corriente se divide. 1/R_t = 1/R1 + 1/R2 +
+                1/R3. Si una falla, las otras siguen.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>
+      <div class="footer-text">Simulador de Resistencia Eléctrica</div>
+    </footer>
+  </div>
+
+  <script>
+    // ─── Color data ───────────────────────────────────────────────
+    const COLORS = [
+      { name: 'Negro', hex: '#1a1a1a', textHex: '#ffffff', val: 0 },
+      { name: 'Café', hex: '#8B4513', textHex: '#ffffff', val: 1 },
+      { name: 'Rojo', hex: '#CC0000', textHex: '#ffffff', val: 2 },
+      { name: 'Naranja', hex: '#E65100', textHex: '#ffffff', val: 3 },
+      { name: 'Amarillo', hex: '#F9A825', textHex: '#1a1a1a', val: 4 },
+      { name: 'Verde', hex: '#2E7D32', textHex: '#ffffff', val: 5 },
+      { name: 'Azul', hex: '#1565C0', textHex: '#ffffff', val: 6 },
+      { name: 'Violeta', hex: '#6A1B9A', textHex: '#ffffff', val: 7 },
+      { name: 'Gris', hex: '#546E7A', textHex: '#ffffff', val: 8 },
+      { name: 'Blanco', hex: '#ECEFF1', textHex: '#1a1a1a', val: 9 },
+    ];
+    const MULTS = [1, 10, 100, 1000, 10000, 100000, 1000000];
+    const TOLS = [
+      { name: '±1%', hex: '#8B4513', label: 'Café', textHex: '#fff' },
+      { name: '±5%', hex: '#9E9E9E', label: 'Plateado', textHex: '#1a1a1a' },
+      { name: '±10%', hex: '#F9A825', label: 'Dorado', textHex: '#1a1a1a' },
+    ];
+
+    let currentMode = 'serie';
+
+    // ─── TAB SWITCH ───────────────────────────────────────────────
+    function switchTab(t) {
+      ['ohm', 'colores', 'circuito'].forEach((id, i) => {
+        document.getElementById('panel-' + id).classList.toggle('active', id === t);
+        document.querySelectorAll('.tab')[i].classList.toggle('active', id === t);
+      });
+      if (t === 'colores') buildColorTable();
+      if (t === 'circuito') updateCircuit();
+    }
+
+    // ─── PANEL 1: LEY DE OHM ─────────────────────────────────────
+    const PATH_CIRCUIT = [
+      { x: 26, y: 35 }, { x: 275, y: 35 }, { x: 275, y: 68 }   // top → resistor
+    ].concat(
+      bezierPoints(275, 112, 275, 142, 8),      // through resistor to bottom-right
+      [{ x: 150, y: 142 }],                           // → ammeter
+      [{ x: 26, y: 142 }],                            // → left
+      [{ x: 26, y: 102 }]                             // → battery
+    );
+
+    function bezierPoints(x1, y1, x2, y2, n = 8) {
+      const pts = [];
+      for (let i = 0; i <= n; i++) { pts.push({ x: x1 + (x2 - x1) * i / n, y: y1 + (y2 - y1) * i / n }); }
+      return pts;
+    }
+
+    // Electron animation via JS
+    let animTime = 0;
+    const electrons = [
+      { el: null, phase: 0 },
+      { el: null, phase: 0.33 },
+      { el: null, phase: 0.66 },
+    ];
+    let animSpeed = 0.0015;
+
+    const CIRCUIT_PATH = buildCircuitPath();
+
+    function buildCircuitPath() {
+      const pts = [];
+      // top: left→right: (26,35) → (275,35)
+      for (let x = 26; x <= 275; x += 5) pts.push({ x, y: 35 });
+      // right down: (275,35) → (275,68)
+      for (let y = 35; y <= 68; y += 3) pts.push({ x: 275, y });
+      // gap (resistor): skip to (275,112)
+      for (let y = 68; y <= 112; y += 3) pts.push({ x: 275, y });
+      // right bottom: (275,112) → (275,142)
+      for (let y = 112; y <= 142; y += 3) pts.push({ x: 275, y });
+      // bottom: right→left: (275,142) → (26,142)
+      for (let x = 275; x >= 26; x -= 5) pts.push({ x, y: 142 });
+      // left up: (26,142) → (26,102)
+      for (let y = 142; y >= 102; y -= 3) pts.push({ x: 26, y });
+      return pts;
+    }
+
+    function getPathPoint(phase) {
+      const idx = Math.floor(phase * CIRCUIT_PATH.length) % CIRCUIT_PATH.length;
+      return CIRCUIT_PATH[Math.max(0, idx)];
+    }
+
+    function animLoop() {
+      animTime += animSpeed;
+      electrons.forEach((e, i) => {
+        const phase = ((animTime + e.phase) % 1);
+        const pt = getPathPoint(phase);
+        if (e.el) { e.el.setAttribute('cx', pt.x); e.el.setAttribute('cy', pt.y); }
+      });
+      requestAnimationFrame(animLoop);
+    }
+
+    function updateOhm() {
+      const V = parseInt(document.getElementById('sl-v').value);
+      const R = parseInt(document.getElementById('sl-r').value);
+      const I = V / R;
+      const P = (V * I);
+
+      document.getElementById('rd-v').textContent = V + ' V';
+      document.getElementById('rd-r').textContent = R + ' Ω';
+      document.getElementById('res-v').textContent = V;
+      document.getElementById('res-i').textContent = I.toFixed(2);
+      document.getElementById('res-p').textContent = P.toFixed(2);
+      document.getElementById('lbl-bat').textContent = V + 'V';
+      document.getElementById('lbl-res').textContent = R + 'Ω';
+      document.getElementById('lbl-amp').textContent = I.toFixed(2) + 'A';
+
+      document.getElementById('bv-txt').textContent = V + ' V';
+      document.getElementById('bi-txt').textContent = I.toFixed(2) + ' A';
+      document.getElementById('bp-txt').textContent = P.toFixed(2) + ' W';
+
+      document.getElementById('bar-v').style.width = (V / 24 * 100).toFixed(1) + '%';
+      document.getElementById('bar-i').style.width = Math.min(I / 2 * 100, 100).toFixed(1) + '%';
+      document.getElementById('bar-p').style.width = Math.min(P / 24 * 100, 100).toFixed(1) + '%';
+
+      // Resistor glow based on R
+      const op = (0.1 + (R / 100) * 0.35).toFixed(2);
+      document.getElementById('res-rect').style.opacity = op;
+
+      // Animation speed (more I = faster electrons)
+      animSpeed = 0.0005 + I * 0.002;
+
+      // Interpretation
+      let msg;
+      if (I < 0.1) msg = `⚠ Con ${V}V y ${R}Ω → ${I.toFixed(3)}A. Alta resistencia: los electrones avanzan muy lento.`;
+      else if (I < 0.4) msg = `✓ Con ${V}V y ${R}Ω → ${I.toFixed(2)}A. Resistencia moderada: corriente controlada y segura.`;
+      else msg = `⚡ Con ${V}V y ${R}Ω → ${I.toFixed(2)}A. Baja resistencia: fluye mucha corriente. ¡Cuidado!`;
+      document.getElementById('interp').textContent = msg;
+    }
+
+    // ─── PANEL 2: CÓDIGO DE COLORES ──────────────────────────────
+    function buildColorTable() {
+      const ct = document.getElementById('color-table');
+      if (ct.children.length) return;
+      COLORS.forEach(c => {
+        const d = document.createElement('div');
+        d.className = 'ct-cell';
+        d.innerHTML = `<div class="ct-swatch" style="background:${c.hex}"></div>
+      <div class="ct-name">${c.name}</div>
+      <div class="ct-num">${c.val}</div>`;
+        ct.appendChild(d);
+      });
+    }
+
+    function updateColor() {
+      const b1 = parseInt(document.getElementById('b1').value);
+      const b2 = parseInt(document.getElementById('b2').value);
+      const b3 = parseInt(document.getElementById('b3').value);
+      const b4 = parseInt(document.getElementById('b4').value);
+
+      const mult = MULTS[b3];
+      const resistance = (b1 * 10 + b2) * mult;
+      const tolPct = parseFloat(TOLS[b4].name.replace('±', '').replace('%', ''));
+      const lo = (resistance * (1 - tolPct / 100)).toFixed(0);
+      const hi = (resistance * (1 + tolPct / 100)).toFixed(0);
+
+      document.getElementById('rd-b1').textContent = b1;
+      document.getElementById('rd-b2').textContent = b2;
+      document.getElementById('rd-b3').textContent = '×' + mult.toLocaleString();
+      document.getElementById('rd-b4').textContent = TOLS[b4].name;
+
+      let rStr = resistance >= 1e6 ? (resistance / 1e6).toFixed(2).replace(/\.?0+$/, '') + ' MΩ'
+        : resistance >= 1000 ? (resistance / 1000).toFixed(2).replace(/\.?0+$/, '') + ' kΩ'
+          : resistance + ' Ω';
+      document.getElementById('color-val').textContent = rStr;
+      document.getElementById('color-tol').textContent = `Tolerancia ${TOLS[b4].name} → ${lo} Ω  a  ${hi} Ω`;
+
+      document.getElementById('band1').style.background = COLORS[b1].hex;
+      document.getElementById('band2').style.background = COLORS[b2].hex;
+      document.getElementById('band3').style.background = COLORS[b3].hex;
+      document.getElementById('band4').style.background = TOLS[b4].hex;
+
+      const bl = document.getElementById('band-labels');
+      bl.innerHTML = [
+        { c: COLORS[b1], lbl: COLORS[b1].name },
+        { c: COLORS[b2], lbl: COLORS[b2].name },
+        { c: COLORS[b3], lbl: COLORS[b3].name + ' (×' + mult.toLocaleString() + ')' },
+        { c: TOLS[b4], lbl: TOLS[b4].label + ' ' + TOLS[b4].name },
+      ].map(({ c, lbl }) =>
+        `<span class="band-chip" style="background:${c.hex};color:${c.textHex}">${lbl}</span>`
+      ).join('');
+    }
+
+    // ─── PANEL 3: SERIE & PARALELO ───────────────────────────────
+    function setMode(m) {
+      currentMode = m;
+      document.getElementById('btn-serie').classList.toggle('active', m === 'serie');
+      document.getElementById('btn-paralelo').classList.toggle('active', m === 'paralelo');
+      updateCircuit();
+    }
+
+    function updateCircuit() {
+      const R1 = parseInt(document.getElementById('sr1').value);
+      const R2 = parseInt(document.getElementById('sr2').value);
+      const R3 = parseInt(document.getElementById('sr3').value);
+      const V = parseInt(document.getElementById('sv-src').value);
+
+      document.getElementById('rd-r1').textContent = R1 + ' Ω';
+      document.getElementById('rd-r2').textContent = R2 + ' Ω';
+      document.getElementById('rd-r3').textContent = R3 + ' Ω';
+      document.getElementById('rd-vsrc').textContent = V + ' V';
+
+      let Rt, It, vals1, vals2, vals3;
+      if (currentMode === 'serie') {
+        Rt = R1 + R2 + R3;
+        It = V / Rt;
+        const I = It;
+        vals1 = { v: I * R1, i: I };
+        vals2 = { v: I * R2, i: I };
+        vals3 = { v: I * R3, i: I };
+      } else {
+        Rt = 1 / (1 / R1 + 1 / R2 + 1 / R3);
+        It = V / Rt;
+        vals1 = { v: V, i: V / R1 };
+        vals2 = { v: V, i: V / R2 };
+        vals3 = { v: V, i: V / R3 };
+      }
+
+      document.getElementById('s-rt').textContent = Rt.toFixed(1);
+      document.getElementById('s-it').textContent = It.toFixed(3);
+      document.getElementById('s-pt').textContent = (V * It).toFixed(2);
+
+      drawCircuitDiagram(R1, R2, R3, V, vals1, vals2, vals3, It, Rt);
+
+      const isS = currentMode === 'serie';
+      document.getElementById('vbd-title').textContent = isS ? '// Voltaje en cada R' : '// Corriente en cada R';
+      const colors = ['#1E88E5', '#FF6D00', '#00897B'];
+      const rows = [
+        [R1, isS ? `V1 = ${vals1.v.toFixed(2)} V` : `I1 = ${vals1.i.toFixed(3)} A`, colors[0]],
+        [R2, isS ? `V2 = ${vals2.v.toFixed(2)} V` : `I2 = ${vals2.i.toFixed(3)} A`, colors[1]],
+        [R3, isS ? `V3 = ${vals3.v.toFixed(2)} V` : `I3 = ${vals3.i.toFixed(3)} A`, colors[2]],
+      ];
+      document.getElementById('voltage-breakdown').innerHTML = rows.map(([r, txt, c]) =>
+        `<div class="vbd-row">
+      <div class="vbd-dot" style="background:${c}"></div>
+      <div class="vbd-label">R = ${r} Ω</div>
+      <div class="vbd-val" style="color:${c}">${txt}</div>
+    </div>`
+      ).join('');
+    }
+
+    function drawCircuitDiagram(R1, R2, R3, V, v1, v2, v3, It, Rt) {
+      const svg = document.getElementById('circuit-panel');
+      const ns = 'http://www.w3.org/2000/svg';
+      svg.innerHTML = '';
+      const colors = ['#1E88E5', '#FF6D00', '#00897B'];
+
+      const mk = (tag, attrs, txt) => {
+        const e = document.createElementNS(ns, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        if (txt !== undefined) e.textContent = txt;
+        return e;
+      };
+      const line = (x1, y1, x2, y2, stroke = '#3A4E6A', sw = 1.5) =>
+        mk('line', { x1, y1, x2, y2, stroke, 'stroke-width': sw });
+      const text = (x, y, t, fill = '#8B9BAE', fs = 9, anchor = 'middle') =>
+        mk('text', { x, y, 'text-anchor': anchor, fill, 'font-size': fs, 'font-family': "'JetBrains Mono',monospace" }, t);
+      const resistor = (x, y, color, rlabel, sublabel) => {
+        const g = mk('g', {});
+        g.appendChild(mk('rect', { x, y, width: 46, height: 26, rx: 3, fill: color, opacity: '0.15', stroke: color, 'stroke-width': 1.5 }));
+        const t1 = mk('text', { x: x + 23, y: y + 18, 'text-anchor': 'middle', fill: color, 'font-size': 14, 'font-family': "'JetBrains Mono',monospace", 'font-weight': 700 }, 'Ω');
+        g.appendChild(t1);
+        const t2 = mk('text', { x: x + 23, y: y, 'text-anchor': 'middle', fill: '#8B9BAE', 'font-size': 8, 'font-family': "'JetBrains Mono',monospace" }, rlabel);
+        g.appendChild(t2);
+        const t3 = mk('text', { x: x + 23, y: y - 8, 'text-anchor': 'middle', fill: color, 'font-size': 8, 'font-family': "'JetBrains Mono',monospace" }, sublabel);
+        g.appendChild(t3);
+        return g;
+      };
+      const battery = (x, y, volt) => {
+        const g = mk('g', {});
+        g.appendChild(mk('rect', { x, y, width: 12, height: 32, rx: 2, fill: '#1A2F50', stroke: '#1E88E5', 'stroke-width': 1.5 }));
+        g.appendChild(mk('text', { x: x - 2, y: y - 2, fill: '#1E88E5', 'font-size': 9, 'font-family': "'JetBrains Mono',monospace" }, '+'));
+        g.appendChild(mk('text', { x: x - 2, y: y + 42, fill: '#1E88E5', 'font-size': 9, 'font-family': "'JetBrains Mono',monospace" }, '−'));
+        g.appendChild(mk('text', { x: x - 2, y: y + 54, 'text-anchor': 'start', fill: '#8B9BAE', 'font-size': 8, 'font-family': "'JetBrains Mono',monospace" }, volt + 'V'));
+        return g;
+      };
+
+      if (currentMode === 'serie') {
+        // Outer rails
+        svg.appendChild(battery(10, 66, V));
+        svg.appendChild(line(10, 72, 10, 30));
+        svg.appendChild(line(22, 72, 22, 30));
+        svg.appendChild(line(22, 98, 22, 138));
+        svg.appendChild(line(10, 98, 10, 138));
+        svg.appendChild(line(10, 30, 280, 30));
+        svg.appendChild(line(10, 138, 280, 138));
+        svg.appendChild(line(280, 30, 280, 138));
+
+        // 3 resistors in series
+        const xs = [50, 130, 210];
+        const rs = [R1, R2, R3];
+        const vs_ = [
+          currentMode === 'serie' ? v1.v.toFixed(2) + 'V' : v1.i.toFixed(3) + 'A',
+          currentMode === 'serie' ? v2.v.toFixed(2) + 'V' : v2.i.toFixed(3) + 'A',
+          currentMode === 'serie' ? v3.v.toFixed(2) + 'V' : v3.i.toFixed(3) + 'A',
+        ];
+        xs.forEach((x, i) => {
+          svg.appendChild(line(i === 0 ? 22 : xs[i - 1] + 46, 92, x, 92, colors[i]));
+          svg.appendChild(resistor(x, 79, colors[i], `R${i + 1}=${rs[i]}Ω`, vs_[i]));
+        });
+        svg.appendChild(line(xs[2] + 46, 92, 280, 92));
+        // Total info
+        svg.appendChild(text(150, 155, `R_total = ${Rt.toFixed(0)} Ω   |   I = ${It.toFixed(3)} A`, '#FF6D00', 9));
+
+      } else {
+        // Parallel
+        svg.appendChild(battery(10, 62, V));
+        svg.appendChild(line(10, 68, 10, 28)); svg.appendChild(line(22, 68, 22, 28));
+        svg.appendChild(line(10, 94, 10, 138)); svg.appendChild(line(22, 94, 22, 138));
+        svg.appendChild(line(22, 28, 30, 28)); svg.appendChild(line(22, 138, 30, 138));
+        svg.appendChild(line(30, 28, 30, 138, '#3A4E6A', 1));
+        svg.appendChild(line(270, 28, 270, 138, '#3A4E6A', 1));
+        svg.appendChild(line(270, 28, 280, 28)); svg.appendChild(line(270, 138, 280, 138));
+        svg.appendChild(line(280, 28, 280, 138));
+
+        const ys = [24, 72, 120]; const rs = [R1, R2, R3];
+        const islabels = [
+          `I1=${v1.i.toFixed(3)}A`, `I2=${v2.i.toFixed(3)}A`, `I3=${v3.i.toFixed(3)}A`
+        ];
+        ys.forEach((y, i) => {
+          const cy = y + 13;
+          svg.appendChild(line(30, cy, 68, cy, colors[i]));
+          svg.appendChild(resistor(68, y, colors[i], `R${i + 1}=${rs[i]}Ω`, islabels[i]));
+          svg.appendChild(line(114, cy, 270, cy, colors[i]));
+        });
+        svg.appendChild(text(230, 155, `R_t = ${Rt.toFixed(1)} Ω   |   It = ${It.toFixed(3)} A`, '#FF6D00', 8));
+      }
+    }
+
+    // ─── INIT ─────────────────────────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      // Hook electron elements
+      electrons[0].el = document.getElementById('e1');
+      electrons[1].el = document.getElementById('e2');
+      electrons[2].el = document.getElementById('e3');
+
+      updateOhm();
+      buildColorTable();
+      updateColor();
+      updateCircuit();
+      animLoop();
+    });
+  </script>
+</body>
+
+</html>
